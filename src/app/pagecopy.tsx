@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 
 type ChatMessage = {
@@ -38,6 +39,13 @@ const Home = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+  
+    // Validate inputs
+    if (!auditSource.files.length && !auditSource.githubUrl && !auditSource.directCode) {
+      alert("Please provide at least one source of contract code");
+      return;
+    }
+  
     setIsLoading(true);
 
     try {
@@ -46,9 +54,11 @@ const Home = () => {
       formData.append("githubUrl", auditSource.githubUrl);
       formData.append("directCode", auditSource.directCode);
 
-      setMessages(prev => [...prev, {
-        isUser: true,
-        text: `Submitted audit request Stuart: ${auditSource.files.map(f => f.name).join("\n")}\nGitHub: ${auditSource.githubUrl || "None"}\nDirect code: ${auditSource.directCode ? "Provided" : "None"}`
+      setMessages(prev => [...prev, { 
+        isUser: true, 
+        text: `Submitted audit request:\n${auditSource.files.map(f => f.name).join("\n")}
+               \nGitHub: ${auditSource.githubUrl || "None"}
+               \nDirect code: ${auditSource.directCode ? "Provided" : "None"}`
       }]);
 
       const response = await fetch("/api/audit", {
@@ -57,6 +67,7 @@ const Home = () => {
       });
 
       const result = await response.json();
+
       setMessages(prev => [...prev, { isUser: false, text: result.analysis }]);
     } catch (error) {
       setMessages(prev => [...prev, { isUser: false, text: "Error during analysis" }]);
@@ -72,7 +83,9 @@ const Home = () => {
           <ChatMessageItem key={index} message={message} />
         ))}
       </div>
+
       {isLoading && <div className="text-center p-4">Analyzing contracts...</div>}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-2">Upload Contract Files:</label>
@@ -84,6 +97,7 @@ const Home = () => {
             className="block w-full"
           />
         </div>
+
         <div>
           <label className="block mb-2">GitHub Repository URL:</label>
           <input
@@ -94,6 +108,7 @@ const Home = () => {
             className="w-full p-2 border rounded"
           />
         </div>
+
         <div>
           <label className="block mb-2">Or paste contract code directly:</label>
           <textarea
@@ -103,6 +118,7 @@ const Home = () => {
             placeholder="// Paste your contract code here..."
           />
         </div>
+
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
